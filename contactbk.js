@@ -8,7 +8,9 @@ import multer from "multer";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+
+// Railway provides PORT via env, fallback for local dev
+const PORT = process.env.PORT || 8080;
 
 // Middleware
 app.use(cors());
@@ -18,7 +20,7 @@ app.use(express.json());
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// Nodemailer transporter (use Gmail App Password)
+// Nodemailer transporter (use Gmail App Password or another SMTP)
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -38,7 +40,6 @@ app.post("/contact", async (req, res) => {
   }
 
   try {
-    // Send to your inbox
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       replyTo: email,
@@ -70,7 +71,6 @@ app.post(
     try {
       const { name, stream, subject, email } = req.body;
 
-      // ✅ Stream is optional now
       if (!name || !subject || !email || !req.files?.file) {
         return res.status(400).json({
           success: false,
@@ -78,7 +78,6 @@ app.post(
         });
       }
 
-      // Attachments → ONLY for admin email
       let attachments = [];
       if (req.files.picture) {
         attachments.push({
@@ -93,7 +92,6 @@ app.post(
         });
       }
 
-      /* ---------------- Send to Admin ---------------- */
       await transporter.sendMail({
         from: `"Student StudyStone" <${process.env.EMAIL_USER}>`,
         to: "sstudystone@gmail.com",
@@ -124,8 +122,6 @@ app.use((req, res) => {
 });
 
 /* ---------------- START SERVER ---------------- */
-const PORT = process.env.PORT || 8080; // Railway gives you a PORT
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
 });
-
